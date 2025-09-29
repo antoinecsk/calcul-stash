@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Partage du butin précis</title>
+<title>Partage exact du butin</title>
 <style>
-  body { font-family: Arial; margin: 20px; }
-  table { border-collapse: collapse; margin-bottom: 20px; }
-  th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: right; }
-  th { background: #eee; }
-  input { width: 80px; text-align: right; }
+body { font-family: Arial; margin: 20px; }
+table { border-collapse: collapse; margin-bottom: 20px; }
+th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: right; }
+th { background: #eee; }
+input { width: 80px; text-align: right; }
 </style>
 </head>
 <body>
 
-<h2>Partage du butin après réparations</h2>
+<h2>Partage exact du butin après réparations</h2>
 
 <table id="playersTable">
   <thead>
@@ -26,9 +26,9 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>Mel</td>      <td><input type="number" value="2"></td> <td><input type="number" value="2"></td> <td class="net"></td> <td class="balance"></td></tr>
-    <tr><td>Steven</td>   <td><input type="number" value="3"></td> <td><input type="number" value="1"></td> <td class="net"></td> <td class="balance"></td></tr>
-    <tr><td>Antoine</td>  <td><input type="number" value="5"></td> <td><input type="number" value="1"></td> <td class="net"></td> <td class="balance"></td></tr>
+    <tr><td>Mel</td>      <td><input type="number" value="30"></td> <td><input type="number" value="10"></td> <td></td> <td></td></tr>
+    <tr><td>Steven</td>   <td><input type="number" value="30"></td> <td><input type="number" value="10"></td> <td></td> <td></td></tr>
+    <tr><td>Antoine</td>  <td><input type="number" value="40"></td> <td><input type="number" value="30"></td> <td></td> <td></td></tr>
   </tbody>
 </table>
 
@@ -45,38 +45,42 @@ function calculate() {
   const table = document.getElementById("playersTable").tBodies[0];
   let players = [];
 
-  // Lecture des valeurs et calcul net
+  // 1. Lire brut et réparations, calculer net
   Array.from(table.rows).forEach(row => {
     const name = row.cells[0].innerText;
     const gross = parseFloat(row.cells[1].firstElementChild.value) || 0;
     const repair = parseFloat(row.cells[2].firstElementChild.value) || 0;
     const net = gross - repair;
     row.cells[3].innerText = net;
-    players.push({name, gross, repair, net, balance:0});
+    players.push({name, gross, repair, net, finalTarget:0, balance:0});
   });
 
-  // Calcul de la part équitable
+  // 2. Part équitable brute = total net / nombre de joueurs
   const totalNet = players.reduce((sum,p)=>sum+p.net,0);
   const equalShare = totalNet / players.length;
 
-  // Calcul balance = montant que le joueur doit atteindre pour avoir sa part + réparations
-  players.forEach(p => p.balance = equalShare + p.repair - p.net);
+  // 3. Montant final = part équitable + réparations payées
+  players.forEach(p => {
+    p.finalTarget = equalShare + p.repair;
+    p.balance = p.finalTarget - p.net; // positif = doit recevoir, négatif = doit donner
+  });
 
-  // Affichage balances
-  Array.from(table.rows).forEach((row,i)=>row.cells[4].innerText = players[i].balance);
+  // 4. Afficher balances
+  Array.from(table.rows).forEach((row,i) => row.cells[4].innerText = players[i].balance);
 
-  // Séparation créditeurs/débiteurs
+  // 5. Séparer créditeurs/débiteurs
   let creditors = players.filter(p => p.balance > 0).map(p => ({...p}));
   let debtors   = players.filter(p => p.balance < 0).map(p => ({...p, balance: -p.balance}));
 
+  // 6. Génération des transferts (minimaux)
   let transfers = [];
-  let i=0,j=0;
+  let i=0, j=0;
   while(i<debtors.length && j<creditors.length){
     let debtor = debtors[i];
     let creditor = creditors[j];
     let amt = Math.min(debtor.balance, creditor.balance);
     if(amt>0){
-      transfers.push({from:debtor.name,to:creditor.name,amount:amt});
+      transfers.push({from:debtor.name, to:creditor.name, amount:amt});
       debtor.balance -= amt;
       creditor.balance -= amt;
     }
@@ -84,7 +88,7 @@ function calculate() {
     if(creditor.balance < 0.0001) j++;
   }
 
-  // Affichage des transferts
+  // 7. Affichage des transferts
   const tBody = document.getElementById("transfersTable").tBodies[0];
   tBody.innerHTML = "";
   transfers.forEach(t => {
