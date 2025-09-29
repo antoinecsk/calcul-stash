@@ -9,7 +9,6 @@
   th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: right; }
   th { background: #eee; }
   input { width: 100px; text-align: right; }
-  .center { text-align: center; }
 </style>
 </head>
 <body>
@@ -67,7 +66,7 @@ function calculate() {
   let players = [];
   
   // Lecture des valeurs et calcul des nets
-  for (let row of table.rows) {
+  for (let row of Array.from(table.rows)) {
     const name = row.cells[0].innerText;
     const gross = parseFloat(row.cells[1].firstElementChild.value) || 0;
     const repair = parseFloat(row.cells[2].firstElementChild.value) || 0;
@@ -80,7 +79,7 @@ function calculate() {
   const totalNet = players.reduce((sum,p)=>sum+p.net,0);
   const equalShare = totalNet / players.length;
   players.forEach(p => p.balance = p.repair + equalShare - p.net);
-  table.rows.forEach((row,i)=>row.cells[4].innerText = players[i].balance.toLocaleString());
+  Array.from(table.rows).forEach((row,i)=>row.cells[4].innerText = players[i].balance.toLocaleString());
 
   // Génération des transferts (greedy)
   let creditors = players.filter(p => p.balance > 0).map(p => ({...p}));
