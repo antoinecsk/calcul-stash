@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Partage du butin</title>
+<style>
+  body { font-family: Arial; margin: 20px; }
+  table { border-collapse: collapse; margin-bottom: 20px; }
+  th, td { border: 1px solid #ccc; padding: 6px 12px; text-align: right; }
+  th { background: #eee; }
+  input { width: 100px; text-align: right; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<h2>Partage du butin après réparations</h2>
+
+<table id="playersTable">
+  <thead>
+    <tr>
+      <th>Joueur</th>
+      <th>Brut</th>
+      <th>Réparations</th>
+      <th>Net</th>
+      <th>Balance</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Mel</td>
+      <td><input type="number" value="7400000"></td>
+      <td><input type="number" value="775000"></td>
+      <td class="net"></td>
+      <td class="balance"></td>
+    </tr>
+    <tr>
+      <td>Steven</td>
+      <td><input type="number" value="4300000"></td>
+      <td><input type="number" value="375000"></td>
+      <td class="net"></td>
+      <td class="balance"></td>
+    </tr>
+    <tr>
+      <td>Antoine</td>
+      <td><input type="number" value="2340000"></td>
+      <td><input type="number" value="131000"></td>
+      <td class="net"></td>
+      <td class="balance"></td>
+    </tr>
+  </tbody>
+</table>
+
+<button onclick="calculate()">Calculer les transferts</button>
+
+<h3>Transferts à effectuer :</h3>
+<table id="transfersTable">
+  <thead>
+    <tr><th>De</th><th>À</th><th>Montant</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+function calculate() {
+  const table = document.getElementById("playersTable").tBodies[0];
+  let players = [];
+  
+  // Lecture des valeurs et calcul des nets
+  for (let row of table.rows) {
+    const name = row.cells[0].innerText;
+    const gross = parseFloat(row.cells[1].firstElementChild.value) || 0;
+    const repair = parseFloat(row.cells[2].firstElementChild.value) || 0;
+    const net = gross - repair;
+    row.cells[3].innerText = net.toLocaleString();
+    players.push({name, gross, repair, net, balance:0});
+  }
+
+  // Calcul part égale et balances
+  const totalNet = players.reduce((sum,p)=>sum+p.net,0);
+  const equalShare = totalNet / players.length;
+  players.forEach(p => p.balance = p.repair + equalShare - p.net);
+  table.rows.forEach((row,i)=>row.cells[4].innerText = players[i].balance.toLocaleString());
+
+  // Génération des transferts (greedy)
+  let creditors = players.filter(p => p.balance > 0).map(p => ({...p}));
+  let debtors = players.filter(p => p.balance < 0).map(p => ({...p, balance: -p.balance}));
+  let transfers = [];
+  let i = 0, j = 0;
+  while (i < debtors.length && j < creditors.length) {
+    let debtor = debtors[i];
+    let creditor = creditors[j];
+    let amt = Math.min(debtor.balance, creditor.balance);
+    transfers.push({from: debtor.name, to: creditor.name, amount: amt});
+    debtor.balance -= amt;
+    creditor.balance -= amt;
+    if (debtor.balance < 0.01) i++;
+    if (creditor.balance < 0.01) j++;
+  }
+
+  // Affichage des transferts
+  const tBody = document.getElementById("transfersTable").tBodies[0];
+  tBody.innerHTML = "";
+  for (let t of transfers) {
+    const row = tBody.insertRow();
+    row.insertCell().innerText = t.from;
+    row.insertCell().innerText = t.to;
+    row.insertCell().innerText = t.amount.toLocaleString();
+  }
+}
+</script>
+
+</body>
+</html>
