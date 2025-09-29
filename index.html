@@ -222,10 +222,14 @@
     </div>
 
     <script>
+        function formatNumber(num) {
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
         let players = [
-            { name: 'Mel', loot: 0, repair: 0 },
-            { name: 'Steven', loot: 0, repair: 0 },
-            { name: 'Antoine', loot: 0, repair: 0 }
+            { name: 'Mel', loot: 10, repair: 2 },
+            { name: 'Steven', loot: 10, repair: 2 },
+            { name: 'Antoine', loot: 10, repair: 4 }
         ];
         
         function renderPlayers() {
@@ -337,19 +341,19 @@
                     <div class="summary">
                         <div class="summary-item">
                             <span>Butin total :</span>
-                            <span><strong>${totalLoot.toFixed(2)}</strong> silver</span>
+                            <span><strong>${formatNumber(totalLoot)}</strong> silver</span>
                         </div>
                         <div class="summary-item">
                             <span>Réparations totales :</span>
-                            <span><strong>${totalRepair.toFixed(2)}</strong> silver</span>
+                            <span><strong>${formatNumber(totalRepair)}</strong> silver</span>
                         </div>
                         <div class="summary-item">
                             <span>Part de butin par personne :</span>
-                            <span><strong>${lootPerPerson.toFixed(2)}</strong> silver</span>
+                            <span><strong>${formatNumber(lootPerPerson)}</strong> silver</span>
                         </div>
                         <div class="summary-item">
                             <span>Part de réparation par personne :</span>
-                            <span><strong>${repairPerPerson.toFixed(2)}</strong> silver</span>
+                            <span><strong>${formatNumber(repairPerPerson)}</strong> silver</span>
                         </div>
                     </div>
                     
@@ -363,9 +367,9 @@
                 html += `
                     <div class="transaction ${className}">
                         <strong>${b.name}</strong> : 
-                        <span class="amount">${sign}${b.balance.toFixed(2)}</span> silver
+                        <span class="amount">${sign}${formatNumber(b.balance)}</span> silver
                         <span style="color: #666; font-size: 14px;">
-                            (butin: ${b.loot}, répa: ${b.repair})
+                            (butin: ${formatNumber(b.loot)}, répa: ${formatNumber(b.repair)})
                         </span>
                     </div>
                 `;
@@ -383,7 +387,7 @@
                     html += `
                         <div class="transaction">
                             <strong>${t.from}</strong> doit donner 
-                            <span class="amount">${t.amount.toFixed(2)} silver</span> 
+                            <span class="amount">${formatNumber(t.amount)} silver</span> 
                             à <strong>${t.to}</strong>
                         </div>
                     `;
